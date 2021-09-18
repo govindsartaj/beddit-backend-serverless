@@ -27,26 +27,52 @@ postsController.post("/", async (req, res, next) => {
 });
 
 postsController.put("/:id", async (req, res, next) => {
-  const post = await Post.findByIdAndUpdate(
-    req.params.id,
-    { $set: { ...req.body, modified: Date.now() } },
-    { $upsert: true, new: true }
-  );
-  res.status(200).send(post);
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $set: { ...req.body, modified: Date.now() } },
+      { $upsert: true, new: true }
+    );
+
+    if (!post) return res.status(404).send({ error: "post not found" });
+
+    res.status(200).send(post);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
 });
 
 postsController.get("/", async (req, res, next) => {
-  const posts = await Post.find({});
-  res.status(200).send(posts);
+  try {
+    const posts = await Post.find({});
+    res.status(200).send(posts);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
 });
 
 postsController.get("/:id", async (req, res, next) => {
-  const post = await Post.findById(req.params.id);
-  res.status(200).send(post);
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) return res.status(404).send({ error: "post not found" });
+
+    res.status(200).send(post);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
 });
 
 postsController.delete("/:id", async (req, res, next) => {
-  const post = await Post.deleteOne({ _id: req.params.id });
-  res.status(200).send(post);
+  try {
+    const post = await Post.deleteOne({ _id: req.params.id });
+    if (post.deletedCount === 0)
+      return res.status(404).send({ error: "post not found" });
+
+    res.status(200).send(post);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
 });
+
 module.exports = postsController;
