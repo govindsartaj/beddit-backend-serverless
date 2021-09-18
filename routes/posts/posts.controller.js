@@ -4,10 +4,16 @@ const Post = require("./Post");
 const Board = require("../boards/Board");
 
 postsController.post("/", async (req, res, next) => {
-  const newPost = new Post(req.body);
-  const board = await Board.findById(newPost.board);
+  try {
+    const newPost = new Post(req.body);
+    const errors = newPost.validateSync();
 
-  if (board) {
+    if (errors) return res.status(500).send({ error: errors.message });
+
+    const board = await Board.findById(newPost.board);
+
+    if (!board) return res.status(500).send({ error: "board not found" });
+
     await newPost.save();
     await Board.findByIdAndUpdate(
       newPost.board,
@@ -15,6 +21,8 @@ postsController.post("/", async (req, res, next) => {
       { $upsert: true, new: true }
     );
     res.status(200).send(newPost);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
   }
 });
 
