@@ -10,13 +10,13 @@ postsController.post("/", async (req, res, next) => {
 
     if (errors) return res.status(500).send({ error: errors.message });
 
-    const board = await Board.findById(newPost.board);
+    const board = await Board.findOne({ name: newPost.board });
 
     if (!board) return res.status(500).send({ error: "board not found" });
 
     await newPost.save();
-    await Board.findByIdAndUpdate(
-      newPost.board,
+    await Board.findOneAndUpdate(
+      { name: newPost.board },
       { $inc: { postCount: 1 } },
       { $upsert: true, new: true }
     );
@@ -65,9 +65,15 @@ postsController.get("/:id", async (req, res, next) => {
 
 postsController.delete("/:id", async (req, res, next) => {
   try {
-    const post = await Post.deleteOne({ _id: req.params.id });
-    if (post.deletedCount === 0)
-      return res.status(404).send({ error: "post not found" });
+    const post = await Post.findOneAndDelete({ _id: req.params.id });
+
+    if (!post) return res.status(404).send({ error: "post not found" });
+
+    await Board.findOneAndUpdate(
+      { name: post.board },
+      { $inc: { postCount: -1 } },
+      { $upsert: true, new: true }
+    );
 
     res.status(200).send(post);
   } catch (e) {

@@ -9,4 +9,5 @@ const PostSchema = new mongoose.Schema({
   board: { type: String, required: [true, 'board is required'] },
 });
 
+
 module.exports = mongoose.model("Post", PostSchema);
