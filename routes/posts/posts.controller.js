@@ -2,10 +2,11 @@ const express = require("express");
 const postsController = express.Router();
 const Post = require("./Post");
 const Board = require("../boards/Board");
+const { protectedRoute } = require("../../middleware/protectedRoute");
 
-postsController.post("/", async (req, res, next) => {
+postsController.post("/", protectedRoute, async (req, res, next) => {
   try {
-    const newPost = new Post(req.body);
+    const newPost = new Post({ ...req.body, author: req.root.username });
     const errors = newPost.validateSync();
 
     if (errors) return res.status(500).send({ error: errors.message });
